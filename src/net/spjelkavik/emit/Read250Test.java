@@ -118,6 +118,8 @@ public class Read250Test implements Runnable, SerialPortEventListener {
 	
 	int prev = -1;
 	
+	long lastEvent;
+	
 	/**
 	 * Method declaration
 	 *
@@ -151,6 +153,13 @@ public class Read250Test implements Runnable, SerialPortEventListener {
 		case SerialPortEvent.DATA_AVAILABLE:
 			byte[] readBuffer = new byte[400];
 
+			long now = System.currentTimeMillis();
+			
+			if ( (now-lastEvent) > 2 * 1000) {
+				frame = new Frame();
+				System.out.println("-- New frame - more than two seconds...");
+			}
+			
 			try {
 				int numBytes = 0;
 				while (inputStream.available() > 0) {
@@ -191,6 +200,8 @@ public class Read250Test implements Runnable, SerialPortEventListener {
 				//System.out.print("Read: " + new String(readBuffer));
 			} catch (IOException e) {}
 
+			lastEvent = now;
+			
 			break;
 		}
 	}

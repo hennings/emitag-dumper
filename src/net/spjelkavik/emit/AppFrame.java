@@ -2,7 +2,10 @@ package net.spjelkavik.emit;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.ScrollPane;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -13,6 +16,7 @@ import java.util.Map;
 
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
+import javax.swing.BoxLayout;
 import javax.swing.ComponentInputMap;
 import javax.swing.InputMap;
 import javax.swing.JButton;
@@ -20,7 +24,10 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JViewport;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -101,9 +108,9 @@ public class AppFrame extends JFrame implements ActionListener, BadgeListener{
 
 	}
 
-	File logfile = new File("c:/tyrving/db/skole2009/log1.txt");
-	File logfile2 = new File("c:/tyrving/db/skole2009/log2.txt");
-	File logfile3 = new File("c:/tyrving/db/skole2009/log-stnr-for-spool.log");
+	File logfile = new File("c:/tyrving/db/skole2010/log1.txt");
+	File logfile2 = new File("c:/tyrving/db/skole2010/log2.txt");
+	File logfile3 = new File("c:/tyrving/db/skole2010/log-stnr-for-spool.log");
 
 	private JLabel runnerTimeLabel;
 
@@ -145,6 +152,12 @@ public class AppFrame extends JFrame implements ActionListener, BadgeListener{
 
 		boolean ok = etimingReader.updateResults(getStartNumber(), frame);
 		if (ok) {
+			
+			currentState.ecard = frame.getBadgeNo();
+			currentState.time = frame.getRunningTime();
+			
+			logArea.append( currentState.toString() +   "\n");
+//			sp.
 			prevLabel.setText(brikkeNrLabel.getText()+", " + startNumberField.getText());
 			statusLabel.setText("<html><em>Stored!</em>");
 			brikkeNrLabel.setText("");
@@ -161,13 +174,19 @@ public class AppFrame extends JFrame implements ActionListener, BadgeListener{
 		return NumberUtils.toInt(startNumberField.getText(),-1);
 	}
 
+	
 	public void updateRunner() {
 		clearStatus();
+		
+		
 		Map<String, String> runner = etimingReader.getRunner(getStartNumber());
 		if (runner!=null) {
 			runnerNameLabel.setText("<html><h1>"+runner.get("name")+" " + runner.get("ename")+"</h1>");
+			currentState.name = runner.get("name")+" " + runner.get("ename");
 		} else {
 			runnerNameLabel.setText("<html><h1>Unknown...</h1>");
+			currentState.name="Unknown...";
+			currentState.stnr = getStartNumber();
 		}
 
 	}
@@ -175,6 +194,9 @@ public class AppFrame extends JFrame implements ActionListener, BadgeListener{
 		statusLabel.setText("new");
 		
 	}
+
+	JTextArea logArea = new JTextArea();
+	JScrollPane sp;
 
 	public AppFrame() {
 		
@@ -190,13 +212,37 @@ public class AppFrame extends JFrame implements ActionListener, BadgeListener{
 		runnerTimeLabel = new JLabel("00:00:00");
 		runnerTimeLabel.setFont(new Font("Sans serif", Font.BOLD, 16));
 		
+		runnerNameLabel.setPreferredSize(new Dimension(600,40));
+		
 		//add the button                  
 		saveDataButton = new JButton("Oppdater");
 		saveDataButton.addActionListener(this);
 
 		statusLabel = new JLabel("Startup!");
 		
-		Container pane = this.getContentPane();
+		Container thispane = this.getContentPane();
+		
+		thispane.setLayout(new BoxLayout(thispane, BoxLayout.PAGE_AXIS));
+		
+		JPanel superTop = new JPanel();
+		superTop.setLayout(new BoxLayout(superTop, BoxLayout.PAGE_AXIS));
+		
+		thispane.add(superTop);
+		Container pane = new JPanel(new BorderLayout());
+		superTop.add(pane);
+		
+		
+//		logArea.setPreferredSize(new Dimension(500,150));
+		logArea.setFocusable(false);
+		logArea.setFont(new Font("Courier New", Font.PLAIN, 12));
+		
+		logArea.setLineWrap(false);
+		
+		sp = new JScrollPane(logArea);
+		sp.setPreferredSize(new Dimension(500,150));
+		
+		superTop.add(sp);
+		
 		pane.add(saveDataButton,BorderLayout.WEST);
 		
 		JPanel topPanel = new JPanel(new BorderLayout());
@@ -267,6 +313,20 @@ public class AppFrame extends JFrame implements ActionListener, BadgeListener{
 			System.err.println("Action for first button/menu item: "+ e);
 			updateDatabase();
 		}
+	}
+
+	final CurrentState currentState = new CurrentState();
+	
+	class CurrentState {
+		String name;
+		String time;
+		int ecard;
+		int stnr;
+		
+		public String toString() {
+			return String.format("%-30s %10s %8d %8d", name, time, ecard, stnr);
+		}
+		
 	}
 
 }
