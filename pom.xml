@@ -6,12 +6,16 @@
     <packaging>jar</packaging>
     <name>Serial 250 Skolesprint</name>
     <version>1.5-SNAPSHOT</version>
+    <repositories>
+
+    <repository>
+        <id>springsource-repo</id>
+        <name>SpringSource Repository</name>
+        <url>http://repo.springsource.org/release</url>
+    </repository>
+    </repositories>
+
     <dependencies>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>org.springframework.transaction</artifactId>
-            <version>3.0.2.RELEASE</version>
-        </dependency>
         <dependency>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
@@ -19,8 +23,8 @@
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
-            <artifactId>org.springframework.jdbc</artifactId>
-            <version>3.0.2.RELEASE</version>
+            <artifactId>spring-jdbc</artifactId>
+            <version>3.0.5.RELEASE</version>
         </dependency>
         <dependency>
             <groupId>javax.comm</groupId>
@@ -67,6 +71,7 @@
             <version>4.8.1</version>
             <scope>test</scope>
         </dependency>
+
 
     </dependencies>
 
