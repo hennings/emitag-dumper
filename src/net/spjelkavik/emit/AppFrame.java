@@ -108,9 +108,9 @@ public class AppFrame extends JFrame implements ActionListener, BadgeListener{
 
 	}
 
-	File logfile = new File("c:/tyrving/db/skole2010/log1.txt");
-	File logfile2 = new File("c:/tyrving/db/skole2010/log2.txt");
-	File logfile3 = new File("c:/tyrving/db/skole2010/log-stnr-for-spool.log");
+	File logfile = new File("c:/tyrving/db/skole2012/log1.txt");
+	File logfile2 = new File("c:/tyrving/db/skole2012/log2.txt");
+	File logfile3 = new File("c:/tyrving/db/skole2012/log-stnr-for-spool.log");
 
 	private JLabel runnerTimeLabel;
 
