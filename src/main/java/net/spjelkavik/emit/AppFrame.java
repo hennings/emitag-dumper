@@ -41,6 +41,12 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 
+/*
+
+  update ecard set ecard=startno
+
+ */
+
 public class AppFrame extends JFrame implements ActionListener, BadgeListener{
 
 	Logger log = Logger.getLogger(AppFrame.class);
@@ -108,9 +114,9 @@ public class AppFrame extends JFrame implements ActionListener, BadgeListener{
 
 	}
 
-	File logfile = new File("c:/tyrving/db/skole2010/log1.txt");
-	File logfile2 = new File("c:/tyrving/db/skole2010/log2.txt");
-	File logfile3 = new File("c:/tyrving/db/skole2010/log-stnr-for-spool.log");
+	File logfile = new File("c:/tyrving/db/skole2012/log1.txt");
+	File logfile2 = new File("c:/tyrving/db/skole2012/log2.txt");
+	File logfile3 = new File("c:/tyrving/db/skole2012/log-stnr-for-spool.log");
 
 	private JLabel runnerTimeLabel;
 
@@ -181,7 +187,7 @@ public class AppFrame extends JFrame implements ActionListener, BadgeListener{
 		
 		Map<String, String> runner = etimingReader.getRunner(getStartNumber());
 		if (runner!=null) {
-			runnerNameLabel.setText("<html><h1>"+runner.get("name")+" " + runner.get("ename")+"</h1>");
+			runnerNameLabel.setText("<html><h1>"+runner.get("startno")+" " + runner.get("name")+" " + runner.get("ename")+"</h1>");
 			currentState.name = runner.get("name")+" " + runner.get("ename");
 		} else {
 			runnerNameLabel.setText("<html><h1>Unknown...</h1>");
@@ -251,7 +257,7 @@ public class AppFrame extends JFrame implements ActionListener, BadgeListener{
 		topPanel.add(runnerTimeLabel, BorderLayout.SOUTH);
 		topPanel.add(statusLabel, BorderLayout.EAST);
 
-		fetchRunnerButton = new JButton("Hent løper");
+		fetchRunnerButton = new JButton("Hent loper");
 		fetchRunnerButton.addActionListener(this);
 		pane.add(fetchRunnerButton, BorderLayout.EAST);
 
