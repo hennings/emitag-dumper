@@ -8,14 +8,23 @@ public class EmitagFrame {
 
     private StringBuilder bytes = new StringBuilder();
 	int curByte = 1;
-	
-	public void add(char i) {
-        bytes.append(i);
+
+    void initBytes(String b) {
+        bytes = new StringBuilder();
+        bytes.append(b);
+    }
+
+	public void add(int i) {
+        bytes.append((char) i);
 	}
+
+    public String getFrame() {
+        return bytes.toString();
+    }
 
 	public boolean isReady() {
         int len = bytes.length();
-        if (len>1 && bytes.charAt(len-1) == 10 && bytes.charAt(len-2) == 13) { return true;}
+        if (len>1) { return true; }
 		return false;
 	}
 
