@@ -26,21 +26,38 @@ public class EtimingReader {
 			this.jdbcTemplate = jdbcTemplate;
 		}
 
-		public boolean updateResults(int startNumber, Frame frame) {
-			String time = frame.getRunningTime();
-			
-/*
-			log.debug("update new set ecard="+frame+" where startno="+startNumber);
-			int r2 = jdbcTemplate.update("update name set ecard=? where startno=?", 
-					new Object[] {frame,startNumber} );
-			log.debug("database updated " + r0+", " + r1+", "+r2);
-			
-			jdbcTemplate.execute("select * from Name where ecard=" + frame);
-*/
+		public boolean updateResults(int startNumber, int badgeNumber) {
+
+            renameOldEcard(badgeNumber);
+
+			log.debug("update new set ecard="+badgeNumber+" where startno="+startNumber);
+
+			int r2 = jdbcTemplate.update("update name set ecard=? where startno=?",
+					new Object[] {badgeNumber,startNumber} );
+
+			log.debug("database updated " + r2);
 			return true;
 		}
 
-		public boolean updateEcardAnonymous(int startNumber, int ecard) {
+    public boolean renameOldEcard(int ecard) {
+        try {
+            int startno = jdbcTemplate.queryForInt("select max(startno) as startnr from name where ecard=?",ecard);
+            if (startno>0) {
+                log.debug("Existing runner " + startno + " had ecard " + ecard + " => changed the ecard");
+                int newEcard = startno + 200000;
+                jdbcTemplate.update("update name set ecard=? where ecard=?",
+                        new Object[] {newEcard, ecard} );
+                int r1 = jdbcTemplate.update("update ecard set ecardno=? where ecardno=?",
+                        new Object[] {newEcard, ecard} );
+            }
+        }catch (Exception e) {
+            log.error("could not rename ", e);
+        }
+        return true;
+    }
+
+
+    public boolean updateEcardAnonymous(int startNumber, int ecard) {
 			int newEcard = startNumber;
 			if (newEcard<200000) newEcard=startNumber + 200000;
 			
@@ -72,6 +89,8 @@ public class EtimingReader {
 					result.put("ename", rs.getString("ename"));
 					result.put("ecard", rs.getString("ecard"));
 					result.put("startno", rs.getString("startno"));
+                    result.put("seed", rs.getString("seed"));
+                    result.put("team_name", rs.getString("team_name"));
 					return result;
 				}
 				
@@ -79,7 +98,7 @@ public class EtimingReader {
 
 	
 			 List<Map<String,String>> r = jdbcTemplate.query(
-					"select n.id,n.ename, n.name,n.times, n.place, n.class, n.cource, n.starttime, "+
+					"select n.id,n.ename, n.name,n.times, n.seed, n.place, n.class, n.cource, n.starttime, "+
 					"n.status, n.statusmsg, n.startno, "+
 					"n.intime, n.ecard, n.changed, n.team, t.name as team_name from Name n, Team t "+
 					"where n.team=t.code and n.startno=? "
@@ -90,4 +109,7 @@ public class EtimingReader {
 			return null;
 		}
 
+    public boolean updateResults(int startNumber, Frame frame) {
+        throw new IllegalStateException("skolemesterskapet");
+    }
 }

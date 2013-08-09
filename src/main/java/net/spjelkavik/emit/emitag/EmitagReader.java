@@ -1,6 +1,7 @@
 package net.spjelkavik.emit.emitag;
 
 import com.google.common.io.Files;
+import org.apache.log4j.Logger;
 
 import javax.comm.*;
 import java.io.File;
@@ -14,6 +15,8 @@ import java.util.TooManyListenersException;
 
 public class EmitagReader implements SerialPortEventListener, Runnable {
 
+    final static private Logger log = Logger.getLogger(EmitagReader.class);
+
     static CommPortIdentifier portId;
     static Enumeration portList;
     InputStream inputStream;
@@ -23,13 +26,13 @@ public class EmitagReader implements SerialPortEventListener, Runnable {
 
     public static boolean findPort(String defaultPort) {
         portList = CommPortIdentifier.getPortIdentifiers();
-        System.out.println("Enumerator: " + portList);
+        log.info("Enumerator: " + portList);
         int n = 0;
         boolean portFound = false;
         while (portList.hasMoreElements()) {
             n++;
             portId = (CommPortIdentifier) portList.nextElement();
-            System.out.println("Port: " + portId + " - " + portId.getName());
+            log.info("Port: " + portId + " - " + portId.getName());
             if (portId.getPortType() == CommPortIdentifier.PORT_SERIAL) {
                 if (portId.getName().equals(defaultPort)) {
                     portFound  = true;
@@ -151,21 +154,21 @@ public class EmitagReader implements SerialPortEventListener, Runnable {
                         numBytes +=delta;
                     }
 
-                    System.out.println("Read: " + numBytes);
+                    //log.debug("Read: " + numBytes);
                     for (int i = 0; i < numBytes; i++) {
                         byte c = readBuffer[i];
                         int c2 = (int) (c&0xFF);
 
-                        System.out.println(String.format(" * %3d (p: %3d)  - %c ", c2,prev,  (char) c>13?c:'*'));
+                        //System.out.println(String.format(" * %3d (p: %3d)  - %c ", c2,prev,  (char) c>13?c:'*'));
 
                         if (c2 == 10 && prev == 13 && frame.isReady()) {
                             frame = submitFrame(frame);
                         }
                         if (c2 == 2) {
-                            System.out.println("STX received - new frame");
+                            //log.debug("STX received - new frame");
                             frame = new EmitagFrame();
                         }  else if (c2 == 3) {
-                            System.out.println("ETS received - new frame");
+                            //log.debug("ETS received - new frame");
                             frame = submitFrame(frame);
                         } else {
                             if (c2!=10 && c2!=13) {
@@ -187,9 +190,17 @@ public class EmitagReader implements SerialPortEventListener, Runnable {
         }
     }
 
+     EmitagMessageParser parser = new EmitagMessageParser();
+
     private EmitagFrame submitFrame(EmitagFrame frame) {
         prevFrame = frame;
-        System.out.println("Complete frame: " + frame.toString());
+        log.info("Complete frame: " + frame.toString());
+        try {
+            ECBMessage m = parser.parse(frame);
+            badgeListener.handleECBMessage(m);
+        } catch (Exception e) {
+            log.info("problems ",e);
+        }
         try {
             Files.append(frame.toString()+"\r\n", new File("c:/tmp/log-emitag.log"), Charset.forName("UTF-8"));
         } catch (IOException e) {

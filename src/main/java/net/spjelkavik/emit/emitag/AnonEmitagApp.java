@@ -19,6 +19,7 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Date;
 import java.util.Map;
 
 public class AnonEmitagApp extends JFrame implements ActionListener, EmitagMessageListener {
@@ -81,10 +82,14 @@ public class AnonEmitagApp extends JFrame implements ActionListener, EmitagMessa
     private JButton saveDataButton;
     private int musicNumber = 0;
     private JLabel runnerNameLabel;
+    private JLabel clubNameLabel;
     private JTextField startNumberField;
+    private JTextField brikkeField;
 
     private JLabel brikkeNrLabel;
+    private JLabel brikkeNrLabel2;
     private JButton fetchRunnerButton;
+    private JButton updateBrikkeButton;
     private Frame frame;
 
     public void actionPerformed(ActionEvent ae){
@@ -108,9 +113,7 @@ public class AnonEmitagApp extends JFrame implements ActionListener, EmitagMessa
 
     }
 
-    File logfile = new File("c:/tyrving/db/skole2012/log1.txt");
-    File logfile2 = new File("c:/tyrving/db/skole2012/log2.txt");
-    File logfile3 = new File("c:/tyrving/db/skole2012/log-stnr-for-spool.log");
+    File logfile = new File("c:/arr/nighthawk/log-brikkenr.txt");
 
     private JLabel runnerTimeLabel;
 
@@ -120,19 +123,25 @@ public class AnonEmitagApp extends JFrame implements ActionListener, EmitagMessa
 
     private void updateDatabase() {
         System.err.println("update database");
-        if (frame==null) {
-            log.error("No frame read!");
+        if (getBadgeNumber()<1) {
+            log.error("No tag number!");
+            statusLabel.setText("no tag number");
             return;
         }
-        System.err.println("Frame: " + frame.getLogLine());
+        if (getStartNumber()<1) {
+            log.error("No start number!");
+            statusLabel.setText("no start number");
+            return;
+        }
         FileWriter logfw = null;
         try {
             logfw = new FileWriter(logfile, true);
-            IOUtils.write(frame.getLogLine(), logfw);
+            IOUtils.write("Update: " + getStartNumber() + " = " + getBadgeNumber() + " = " + new Date().toString(), logfw);
             logfw.close();
         } catch (IOException e) {
             log.error("Could not write log: ", e);
         }
+/*
         try {
             logfw = new FileWriter(logfile2, true);
             IOUtils.write("# Start number: " + getStartNumber()+"\n", logfw);
@@ -141,7 +150,8 @@ public class AnonEmitagApp extends JFrame implements ActionListener, EmitagMessa
         } catch (IOException e) {
             log.error("Could not write log: ", e);
         }
-
+  */
+        /*
         try {
             logfw = new FileWriter(logfile3, true);
             IOUtils.write(frame.getLogLine(getStartNumber()), logfw);
@@ -149,20 +159,24 @@ public class AnonEmitagApp extends JFrame implements ActionListener, EmitagMessa
         } catch (IOException e) {
             log.error("Could not write log: ", e);
         }
-
-        boolean ok = etimingReader.updateResults(getStartNumber(), frame);
+          */
+        boolean ok = etimingReader.updateResults(getStartNumber(), getBadgeNumber());
         if (ok) {
 
-            currentState.ecard = frame.getBadgeNo();
-            currentState.time = frame.getRunningTime();
+            currentState.ecard = getBadgeNumber();
+            currentState.stnr = getStartNumber();
 
             logArea.append( currentState.toString() +   "\n");
 //			sp.
-            prevLabel.setText(brikkeNrLabel.getText()+", " + startNumberField.getText());
+            prevLabel.setText("previous: " + brikkeNrLabel.getText()+", " + startNumberField.getText());
             statusLabel.setText("<html><em>Stored!</em>");
             brikkeNrLabel.setText("");
+            brikkeNrLabel2.setText("");
+            brikkeField.setText("");
             runnerNameLabel.setText("<html><h1>.</h1>");
             runnerTimeLabel.setText("");
+            clubNameLabel.setText("<html><h2>.</h2>");
+            clubNameLabel.setText("");
             frame = null;
 
         } else {
@@ -170,8 +184,20 @@ public class AnonEmitagApp extends JFrame implements ActionListener, EmitagMessa
         }
     }
 
+    public int getBadgeNumber() {
+        return NumberUtils.toInt(brikkeField.getText(), -1);
+    }
+
+
     public int getStartNumber() {
-        return NumberUtils.toInt(startNumberField.getText(), -1);
+        String text = startNumberField.getText();
+        int nr;
+        if (text.length()==6) {
+            nr = NumberUtils.toInt(text.substring(0,5),0);
+        } else {
+            nr = NumberUtils.toInt(text,0);
+        }
+        return nr;
     }
 
 
@@ -181,10 +207,16 @@ public class AnonEmitagApp extends JFrame implements ActionListener, EmitagMessa
 
         Map<String, String> runner = etimingReader.getRunner(getStartNumber());
         if (runner!=null) {
-            runnerNameLabel.setText("<html><h1>"+runner.get("startno")+" " + runner.get("name")+" " + runner.get("ename")+"</h1>");
-            currentState.name = runner.get("name")+" " + runner.get("ename");
+//            runnerNameLabel.setText("<html><h1>"+runner.get("startno")+" " + runner.get("name")+" " + runner.get("ename")+"</h1>");
+            String stnr = runner.get("startno");
+            int startno = NumberUtils.toInt(stnr,0)/100;
+            int leg = NumberUtils.toInt(stnr,0)%100;
+            runnerNameLabel.setText("<html><h1>"+startno+"-" + leg +" " + runner.get("name")+" " + runner.get("ename")+"</h1>");
+            clubNameLabel.setText("<html><h2>"+runner.get("team_name")+"; Leg " + runner.get("seed")+"</h2>");
+            currentState.name = runner.get("name")+" " + runner.get("ename") + " / " + runner.get("team_name");
         } else {
             runnerNameLabel.setText("<html><h1>Unknown...</h1>");
+            clubNameLabel.setText("<html><h1>Unknown...</h1>");
             currentState.name="Unknown...";
             currentState.stnr = getStartNumber();
         }
@@ -214,12 +246,16 @@ public class AnonEmitagApp extends JFrame implements ActionListener, EmitagMessa
 
 
         runnerNameLabel = new JLabel("<html><h1>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</h1>");
+        clubNameLabel= new JLabel("<html><h2>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</h2>");
         runnerTimeLabel = new JLabel("00:00:00");
         runnerTimeLabel.setFont(new Font("Sans serif", Font.BOLD, 16));
         runnerNameLabel.setPreferredSize(new Dimension(600,40));
+        clubNameLabel.setPreferredSize(new Dimension(600,40));
 
         //add the button
-        saveDataButton = new JButton("Oppdater");
+        saveDataButton = new JButton("Oppdater - F3");
+        saveDataButton.setSize(new Dimension(120,60));
+        saveDataButton.setBackground(Color.GREEN);
         saveDataButton.addActionListener(this);
 
         statusLabel = new JLabel("Startup!");
@@ -234,8 +270,16 @@ public class AnonEmitagApp extends JFrame implements ActionListener, EmitagMessa
         sp.setPreferredSize(new Dimension(500,150));
 
 
+        brikkeNrLabel = new JLabel("brikkenr");
+        brikkeNrLabel.setFont(new Font("Sans serif", Font.PLAIN, 18));
+        brikkeNrLabel2 = new JLabel("brikkenr");
+        brikkeNrLabel2.setFont(new Font("Sans serif", Font.PLAIN, 18));
+
+
         all.add(runnerNameLabel);
-        all.add(runnerTimeLabel);
+        all.add(runnerTimeLabel, "wrap");
+        all.add(clubNameLabel, "wrap");
+        all.add(brikkeNrLabel2, "wrap");
         all.add(statusLabel, "wrap");
 
 
@@ -243,7 +287,7 @@ public class AnonEmitagApp extends JFrame implements ActionListener, EmitagMessa
         fetchRunnerButton.addActionListener(this);
         all.add(fetchRunnerButton, "wrap");
 
-        all.add(sp, "wrap");
+        all.add(sp, "span, wrap");
         all.add(saveDataButton, "wrap");
 
         prevLabel = new JLabel("previous, previous");
@@ -252,13 +296,31 @@ public class AnonEmitagApp extends JFrame implements ActionListener, EmitagMessa
         all.add(prevLabel, "wrap");
 
         startNumberField = new JTextField(16);
+        brikkeField = new JTextField("brikkedefault", 16);
+
+        all.add(new JLabel("Startnummer:"));
         all.add(startNumberField, "wrap");
         startNumberField.addActionListener(this);
 
 
-        brikkeNrLabel = new JLabel("brikkenr");
-        brikkeNrLabel.setFont(new Font("Sans serif", Font.PLAIN, 18));
+        all.add(new JLabel("Lest brikkenr:"));
         all.add(brikkeNrLabel, "wrap");
+
+        all.add(new JLabel("Manuell brikke:"));
+        all.add(brikkeField,"wrap");
+
+        updateBrikkeButton = new JButton("Manuell brikke");
+        updateBrikkeButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int brikkeNr = NumberUtils.toInt(brikkeField.getText(),0);
+                setBadgeNumber(brikkeNr);
+                startNumberField.requestFocus();
+                startNumberField.selectAll();
+            }
+        });
+        all.add(updateBrikkeButton);
+
 
         InputMap keyMap = new ComponentInputMap(saveDataButton);
         keyMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F3, 0), "action");
@@ -281,8 +343,13 @@ public class AnonEmitagApp extends JFrame implements ActionListener, EmitagMessa
     @Override
     public void handleECBMessage(ECBMessage f) {
         this.ecbMessage = f;
-        this.setBadgeNumber(f.getEmitagNumber());
-        this.setRunningTime(f.getTimeSinceZero());
+        if (f.getEmitagNumber()>0) {
+            this.setBadgeNumber(f.getEmitagNumber());
+            this.setRunningTime(f.getTimeSinceZero());
+            log.info("read badge number");
+        } else {
+            log.info("irrelevant frame " + f);
+        }
     }
 
     private void setRunningTime(String runningTime) {
@@ -291,16 +358,15 @@ public class AnonEmitagApp extends JFrame implements ActionListener, EmitagMessa
 
     public void setBadgeNumber(int badge) {
         clearStatus();
-        brikkeNrLabel.setText(":" + badge);
+        brikkeNrLabel.setText("emitag " + badge);
+        brikkeNrLabel2.setText("emitag " + badge);
+        brikkeField.setText("" + badge);
     }
 
     public void setEtimingReader(EtimingReader etimingReader) {
         this.etimingReader = etimingReader;
     }
 
-    public EtimingReader getEtimingReader() {
-        return etimingReader;
-    }
 
     class UpdateAction extends AbstractAction {
         public UpdateAction(String text) {
@@ -321,7 +387,7 @@ public class AnonEmitagApp extends JFrame implements ActionListener, EmitagMessa
         int stnr;
 
         public String toString() {
-            return String.format("%-30s %10s %8d %8d", name, time, ecard, stnr);
+            return String.format("%-20s ecard %-8d  stnr %6d %s", name, ecard, stnr, new java.util.Date().toString());
         }
 
     }
