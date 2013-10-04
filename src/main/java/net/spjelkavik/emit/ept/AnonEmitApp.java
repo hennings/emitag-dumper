@@ -44,9 +44,9 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 
  */
 
-public class AppFrame extends JFrame implements ActionListener, BadgeListener{
+public class AnonEmitApp extends JFrame implements ActionListener, BadgeListener{
 
-	Logger log = Logger.getLogger(AppFrame.class);
+	Logger log = Logger.getLogger(AnonEmitApp.class);
 	
 	/**
 	 * 
@@ -59,7 +59,7 @@ public class AppFrame extends JFrame implements ActionListener, BadgeListener{
 		BeanFactory f = new ClassPathXmlApplicationContext(new String[] {"applicationContext.xml"} );
 		EtimingReader et = (EtimingReader) f.getBean("etimingReader");
 
-		AppFrame af = new AppFrame();
+		AnonEmitApp af = new AnonEmitApp();
 		af.setEtimingReader(et);
 
 		String com = "COM1";
@@ -111,9 +111,9 @@ public class AppFrame extends JFrame implements ActionListener, BadgeListener{
 
 	}
 
-	File logfile = new File("c:/tyrving/db/skole2012/log1.txt");
-	File logfile2 = new File("c:/tyrving/db/skole2012/log2.txt");
-	File logfile3 = new File("c:/tyrving/db/skole2012/log-stnr-for-spool.log");
+	File logfile = new File("c:/tyrving/db/skole2013/log1.txt");
+	File logfile2 = new File("c:/tyrving/db/skole2013/log2.txt");
+	File logfile3 = new File("c:/tyrving/db/skole2013/log-stnr-for-spool.log");
 
 	private JLabel runnerTimeLabel;
 
@@ -201,7 +201,7 @@ public class AppFrame extends JFrame implements ActionListener, BadgeListener{
 	JTextArea logArea = new JTextArea();
 	JScrollPane sp;
 
-	public AppFrame() {
+	public AnonEmitApp() {
 		
 		
 		
