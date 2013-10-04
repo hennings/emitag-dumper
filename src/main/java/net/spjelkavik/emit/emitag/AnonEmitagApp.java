@@ -136,7 +136,7 @@ public class AnonEmitagApp extends JFrame implements ActionListener, EmitagMessa
         FileWriter logfw = null;
         try {
             logfw = new FileWriter(logfile, true);
-            IOUtils.write("Update: " + getStartNumber() + " = " + getBadgeNumber() + " = " + new Date().toString(), logfw);
+            IOUtils.write("Update: stnr " + getStartNumber() + " = emitag " + getBadgeNumber() + " = " + new Date().toString()+"\n", logfw);
             logfw.close();
         } catch (IOException e) {
             log.error("Could not write log: ", e);
