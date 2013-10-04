@@ -393,7 +393,3 @@ public class AnonEmitagApp extends JFrame implements ActionListener, EmitagMessa
     }
 
 }
-
-
-
-

@@ -2,7 +2,9 @@ IL Tyrving har arrangert skolesprint for skolene i Bærum siden ca 1995.
 
 De siste årene har vi brukt en losning med anonyme emit-brikker, og strekkoder.
 
-
-
-
 mvn install:install-file -Dfile=lib/commapi/comm.jar -DgroupId=javax.comm -DartifactId=comm -Dversion=2.0.3 -Dpackaging=jar
+
+
+For å kjøre versjonen for emitag:
+java net.spjelkavik.emit.emitag.AnonEmitagApp COM50
+
