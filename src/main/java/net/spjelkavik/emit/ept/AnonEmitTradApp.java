@@ -44,9 +44,9 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 
  */
 
-public class AnonEmitApp extends JFrame implements ActionListener, BadgeListener{
+public class AnonEmitTradApp extends JFrame implements ActionListener, BadgeListener{
 
-	Logger log = Logger.getLogger(AnonEmitApp.class);
+	Logger log = Logger.getLogger(AnonEmitTradApp.class);
 	
 	/**
 	 * 
@@ -59,7 +59,7 @@ public class AnonEmitApp extends JFrame implements ActionListener, BadgeListener
 		BeanFactory f = new ClassPathXmlApplicationContext(new String[] {"applicationContext.xml"} );
 		EtimingReader et = (EtimingReader) f.getBean("etimingReader");
 
-		AnonEmitApp af = new AnonEmitApp();
+		AnonEmitTradApp af = new AnonEmitTradApp();
 		af.setEtimingReader(et);
 
 		String com = "COM1";
@@ -201,7 +201,7 @@ public class AnonEmitApp extends JFrame implements ActionListener, BadgeListener
 	JTextArea logArea = new JTextArea();
 	JScrollPane sp;
 
-	public AnonEmitApp() {
+	public AnonEmitTradApp() {
 		
 		
 		
