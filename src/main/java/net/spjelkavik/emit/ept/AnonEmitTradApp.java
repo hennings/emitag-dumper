@@ -40,7 +40,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /*
 
-  update ecard set ecard=startno
+  update name set ecard=startno
 
  */
 
@@ -153,7 +153,7 @@ public class AnonEmitTradApp extends JFrame implements ActionListener, BadgeList
 			log.error("Could not write log: ", e);
 		}
 
-		boolean ok = etimingReader.updateResults(getStartNumber(), frame);
+		boolean ok = true; //etimingReader.updateResults(getStartNumber(), frame.getBadgeNo());
 		if (ok) {
 			
 			currentState.ecard = frame.getBadgeNo();
@@ -218,7 +218,7 @@ public class AnonEmitTradApp extends JFrame implements ActionListener, BadgeList
 		runnerNameLabel.setPreferredSize(new Dimension(600,40));
 		
 		//add the button                  
-		saveDataButton = new JButton("Oppdater");
+		saveDataButton = new JButton("Oppdater F3");
 		saveDataButton.addActionListener(this);
 
 		statusLabel = new JLabel("Startup!");
