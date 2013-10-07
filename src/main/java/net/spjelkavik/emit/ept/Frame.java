@@ -12,7 +12,7 @@ public class Frame {
 	public void add(int i) {
 		// System.out.println("Curbyte: " + curByte);
 		if (curByte < 217) {
-			System.out.println("Byte # " + curByte + " = " + i);
+			// System.out.println("Byte # " + curByte + " = " + i);
 			frameBytes[curByte++]=i;
 		}
 	}
