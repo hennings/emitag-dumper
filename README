@@ -8,3 +8,6 @@ mvn install:install-file -Dfile=lib/commapi/comm.jar -DgroupId=javax.comm -Darti
 For å kjøre versjonen for emitag:
 java net.spjelkavik.emit.emitag.AnonEmitagApp COM50
 
+
+Kopier javax.comm.properties til %JAVA_HOME%/lib !
+

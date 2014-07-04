@@ -99,7 +99,107 @@
                     <target>1.6</target>
                 </configuration>
             </plugin>
+
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-shade-plugin</artifactId>
+    <version>1.4</version>
+    <executions>
+        <execution>
+            <phase>package</phase>
+            <goals>
+                <goal>shade</goal>
+            </goals>
+        </execution>
+    </executions>
+    <configuration>
+      <shadedArtifactAttached>true</shadedArtifactAttached> <!-- Make the shaded artifact not the main one -->
+      <shadedClassifierName>shaded</shadedClassifierName> <!-- set the suffix to the shaded jar -->
+    </configuration>
+</plugin>
+
+<plugin>
+  <groupId>org.bluestemsoftware.open.maven.plugin</groupId>
+  <artifactId>launch4j-plugin</artifactId>
+  <version>1.5.0.0</version>
+  <executions>
+
+    <!-- GUI exe -->
+    <execution>
+      <id>l4j-emitag</id>
+      <phase>package</phase>
+      <goals>
+        <goal>launch4j</goal>
+      </goals>
+      <configuration>
+        <headerType>gui</headerType>
+        <outfile>target/emitag-app.exe</outfile>
+        <jar>target/${artifactId}-${version}-shaded.jar</jar>
+        <errTitle>App Err</errTitle>
+        <classPath>
+          <mainClass>net.spjelkavik.emit.emitag.AnonEmitagApp</mainClass>
+        </classPath>
+        <icon>src/main/resources/emit.ico</icon>
+        <jre>
+          <minVersion>1.6.0</minVersion>
+          <maxVersion>1.7.9</maxVersion>
+          <initialHeapSize>128</initialHeapSize>
+          <maxHeapSize>1024</maxHeapSize>
+        </jre>
+        <versionInfo>
+          <fileVersion>1.0.0.0</fileVersion>
+          <txtFileVersion>1.0.0.0</txtFileVersion>
+          <fileDescription>Desc</fileDescription>
+          <copyright>C</copyright>
+          <productVersion>1.0.0.0</productVersion>
+          <txtProductVersion>1.0.0.0</txtProductVersion>
+          <productName>Product</productName>
+          <internalName>Product</internalName>
+          <originalFilename>App.exe</originalFilename>
+        </versionInfo>
+      </configuration>
+    </execution>
+
+
+    <execution>
+      <id>l4j-ept</id>
+      <phase>package</phase>
+      <goals>
+        <goal>launch4j</goal>
+      </goals>
+      <configuration>
+        <headerType>gui</headerType>
+        <outfile>target/emitskolesprint-app.exe</outfile>
+        <jar>target/${artifactId}-${version}-shaded.jar</jar>
+        <errTitle>App Err</errTitle>
+        <classPath>
+          <mainClass>net.spjelkavik.emit.ept.AnonEmitTradApp</mainClass>
+        </classPath>
+        <icon>src/main/resources/emit.ico</icon>
+        <jre>
+          <minVersion>1.6.0</minVersion>
+          <maxVersion>1.7.9</maxVersion>
+          <initialHeapSize>128</initialHeapSize>
+          <maxHeapSize>1024</maxHeapSize>
+        </jre>
+        <versionInfo>
+          <fileVersion>1.0.0.0</fileVersion>
+          <txtFileVersion>1.0.0.0</txtFileVersion>
+          <fileDescription>Desc</fileDescription>
+          <copyright>C</copyright>
+          <productVersion>1.0.0.0</productVersion>
+          <txtProductVersion>1.0.0.0</txtProductVersion>
+          <productName>Product</productName>
+          <internalName>Product</internalName>
+          <originalFilename>App.exe</originalFilename>
+        </versionInfo>
+      </configuration>
+    </execution>
+
+  </executions>
+</plugin>
+
         </plugins>
     </build>
 
-</project>
+  </project>

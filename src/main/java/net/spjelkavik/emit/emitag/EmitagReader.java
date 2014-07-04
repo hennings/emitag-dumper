@@ -27,6 +27,7 @@ public class EmitagReader implements SerialPortEventListener, Runnable {
     public static boolean findPort(String defaultPort) {
         portList = CommPortIdentifier.getPortIdentifiers();
         log.info("Enumerator: " + portList);
+        if (!portList.hasMoreElements()) { log.warn("No COM-port found."); }
         int n = 0;
         boolean portFound = false;
         while (portList.hasMoreElements()) {
