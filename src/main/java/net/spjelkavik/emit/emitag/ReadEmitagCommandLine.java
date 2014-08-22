@@ -27,8 +27,7 @@ public class ReadEmitagCommandLine {
             defaultPort = args[0];
         }
         EmitagReader.findPort(defaultPort);
-        EmitagReader re = new EmitagReader();
-        re.setCallback(new EmitagMessageListener() {
+        EmitagReader re = new EmitagReader(new EmitagMessageListener() {
             public void handleECBMessage(ECBMessage m) {
                 System.out.println("Got message: " + m);
             }

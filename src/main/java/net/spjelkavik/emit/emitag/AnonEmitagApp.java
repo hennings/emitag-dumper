@@ -3,11 +3,13 @@ package net.spjelkavik.emit.emitag;
 import net.miginfocom.swing.MigLayout;
 import net.spjelkavik.emit.ept.EtimingReader;
 import net.spjelkavik.emit.ept.Frame;
+import org.apache.commons.dbcp.BasicDataSource;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -19,8 +21,8 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Date;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
 public class AnonEmitagApp extends JFrame implements ActionListener, EmitagMessageListener {
 
@@ -50,32 +52,79 @@ public class AnonEmitagApp extends JFrame implements ActionListener, EmitagMessa
     private static final long serialVersionUID = 4059084342591755190L;
     private EtimingReader etimingReader;
     private ECBMessage ecbMessage;
+    private String comStatus;
 
     public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException {
         //UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
 
-        BeanFactory f = new ClassPathXmlApplicationContext(new String[]{"applicationContext.xml"});
-        EtimingReader et = (EtimingReader) f.getBean("etimingReader");
+        //BeanFactory f = new ClassPathXmlApplicationContext(new String[]{"applicationContext.xml"});
+
+        UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+        UIManager.put("swing.boldMetal", Boolean.FALSE);
+
+
+        EtimingReader et = new EtimingReader();
+
+        EmitagConfig config;
+        if (args.length > 0) {
+            String com = args[0];
+            System.out.println("Using port " + com);
+            config = new EmitagConfig(null,null,com,"ecard1", "jdbc:odbc:etime-java");
+        } else {
+            config = new AskForConfig().askForConfig(EmitagReader.findSerialPorts());
+
+        }
 
         AnonEmitagApp af = new AnonEmitagApp();
         af.setEtimingReader(et);
 
-        String com = "COM1";
-        if (args.length > 0) {
-            com = args[0];
-            System.out.println("Using port " + com);
-        }
-        if (!"NOCOM".equals(com)) {
-            EmitagReader.findPort(com);
-            EmitagReader reader = new EmitagReader();
-            reader.setCallback(af);
+        BasicDataSource ds = new BasicDataSource();
+        ds.setDriverClassName(ConfigFrameMiG.JDBC_DRIVER);
+        ds.setUrl(config.getJdbcUrl());
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(ds);
+        et.setJdbcTemplate(jdbcTemplate);
+
+        if (!"NOCOM".equals(config.getComPort())) {
+            EmitagReader.findPort(config.getComPort());
+            EmitagReader reader = new EmitagReader(af);
+            af.setComStatus("Port: " + reader.getPortName());
+            //reader.setCallback(af);
         } else {
             log.info("Skipping COM-port.");
         }
 
-//        UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+    }
 
-        UIManager.put("swing.boldMetal", Boolean.FALSE);
+    static class AskForConfig {
+         EmitagConfig askForConfig(List<String> serialPorts) {
+            ConfigFrameMiG cf = new ConfigFrameMiG();
+            cf.init(serialPorts, new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    configFinished();
+                }
+            });
+            waitUntilConfigFinished();
+            return cf.getConfig();
+        }
+
+
+        private boolean configFinished = false;
+
+        private synchronized void waitUntilConfigFinished() {
+            while (!configFinished) {
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                }
+            }
+        }
+
+        private synchronized void configFinished() {
+            configFinished = true;
+            notify();
+        }
     }
 
 
@@ -113,11 +162,12 @@ public class AnonEmitagApp extends JFrame implements ActionListener, EmitagMessa
 
     }
 
-    File logfile = new File("c:/arr/nighthawk/log-brikkenr.txt");
+    File logfile = new File("log-brikkenr.txt");
 
     private JLabel runnerTimeLabel;
 
     private JLabel statusLabel;
+    private JLabel comStatusLabel;
 
     private JLabel prevLabel;
 
@@ -260,6 +310,8 @@ public class AnonEmitagApp extends JFrame implements ActionListener, EmitagMessa
 
         statusLabel = new JLabel("Startup!");
 
+        comStatusLabel= new JLabel("Port");
+
 
 //		logArea.setPreferredSize(new Dimension(500,150));
         logArea.setFocusable(false);
@@ -320,6 +372,7 @@ public class AnonEmitagApp extends JFrame implements ActionListener, EmitagMessa
             }
         });
         all.add(updateBrikkeButton);
+        all.add(comStatusLabel);
 
 
         InputMap keyMap = new ComponentInputMap(saveDataButton);
@@ -365,6 +418,10 @@ public class AnonEmitagApp extends JFrame implements ActionListener, EmitagMessa
 
     public void setEtimingReader(EtimingReader etimingReader) {
         this.etimingReader = etimingReader;
+    }
+
+    public void setComStatus(String comStatus) {
+        this.comStatusLabel.setText(comStatus);
     }
 
 

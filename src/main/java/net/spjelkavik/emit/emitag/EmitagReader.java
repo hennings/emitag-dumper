@@ -1,6 +1,7 @@
 package net.spjelkavik.emit.emitag;
 
 import com.google.common.io.Files;
+import net.spjelkavik.emit.ept.BadgeListener;
 import org.apache.log4j.Logger;
 
 import javax.comm.*;
@@ -13,7 +14,7 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.TooManyListenersException;
 
-public class EmitagReader implements SerialPortEventListener, Runnable {
+public final class EmitagReader implements SerialPortEventListener, Runnable {
 
     final static private Logger log = Logger.getLogger(EmitagReader.class);
 
@@ -23,6 +24,19 @@ public class EmitagReader implements SerialPortEventListener, Runnable {
     SerialPort serialPort;
     Thread		      readThread;
 
+
+    public static List<String> findSerialPorts() {
+        Enumeration portList;
+        portList = CommPortIdentifier.getPortIdentifiers();
+        List<String> ports = new ArrayList<String>();
+        while (portList.hasMoreElements()) {
+            portId = (CommPortIdentifier) portList.nextElement();
+            if (portId.getPortType() == CommPortIdentifier.PORT_SERIAL) {
+                ports.add(portId.getName());
+            }
+        }
+        return ports;
+    }
 
     public static boolean findPort(String defaultPort) {
         portList = CommPortIdentifier.getPortIdentifiers();
@@ -48,13 +62,16 @@ public class EmitagReader implements SerialPortEventListener, Runnable {
         return portFound;
     }
 
-    /**
-     * Constructor declaration
-     *
-     *
-     * @see
-     */
-    public EmitagReader() {
+
+        /**
+         * Constructor declaration
+         *
+         *
+         * @see
+         * @param af
+         */
+    public EmitagReader(final EmitagMessageListener af) {
+        this.badgeListener = af;
         try {
             System.out.println("Opening " +portId+", "+ portId.getName());
             serialPort = (SerialPort) portId.open("SimpleReadApp",32000);
@@ -107,6 +124,10 @@ public class EmitagReader implements SerialPortEventListener, Runnable {
     int prev = -1;
 
     long lastEvent;
+
+    public final String getPortName() {
+        return portId.getName();
+    }
 
     /**
      * Method declaration
@@ -203,7 +224,7 @@ public class EmitagReader implements SerialPortEventListener, Runnable {
             log.info("problems ",e);
         }
         try {
-            Files.append(frame.toString()+"\r\n", new File("c:/tmp/log-emitag.log"), Charset.forName("UTF-8"));
+            Files.append(frame.toString()+"\r\n", new File("log-emitag.log"), Charset.forName("UTF-8"));
         } catch (IOException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
@@ -213,9 +234,6 @@ public class EmitagReader implements SerialPortEventListener, Runnable {
         return frame;
     }
 
-    public void setCallback(EmitagMessageListener af) {
-        this.badgeListener = af;
-    }
 
 }
 
