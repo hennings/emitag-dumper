@@ -30,6 +30,7 @@ public class ConfigFrameMiG extends JFrame {
     JTextField dbFileTxt = new JTextField();
     JTextField sysFileTxt = new JTextField();
     JButton butOk = new JButton("Start");
+
     private JButton butExit = new JButton("Avslutt");
 
     private JComboBox listOfComPorts;
@@ -103,7 +104,9 @@ public class ConfigFrameMiG extends JFrame {
                 listOfComPorts.setSelectedIndex(i);
             }
         }
-        all.add(listOfComPorts);
+        all.add(new JLabel("COM-port"));
+        all.add(listOfComPorts, "wrap");
+
 
         String ecardLabel = "ecard1 or ecard2?";
         String[] ecardAlternatives = new String[]{"ecard1", "ecard2"};
@@ -117,13 +120,15 @@ public class ConfigFrameMiG extends JFrame {
 
 
         final JTextField furl = new JTextField();
-        all.add(furl, "growx 250");
+        all.add(furl, "span,width 100%");
 
+        butOk.setEnabled(false);
         butOk.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 updateConfig(prefs);
-                verifyDataSource(prefs, furl);
+                calculateJdbcUrl(prefs, furl);
+                //verifyDataSource(prefs, furl);
 
                 callback.actionPerformed(null);
                 setVisible(false);
@@ -144,7 +149,7 @@ public class ConfigFrameMiG extends JFrame {
         });
 
         configStatus.setForeground(Color.RED);
-        all.add(configStatus, "span 2");
+        all.add(configStatus, "span");
         all.add(new JLabel(""));
         all.add(new JLabel(""),"wrap");
 
@@ -267,7 +272,7 @@ public class ConfigFrameMiG extends JFrame {
 
 
         public String getComPort() {
-            return preferences.get("/comPort", "COM1");
+            return preferences.get("/comport", "COM1");
         }
 
         public void setComPort(String comPort) {
@@ -275,7 +280,7 @@ public class ConfigFrameMiG extends JFrame {
         }
 
         public String getEcardField() {
-            return preferences.get("/ecardfield", "COM1");
+            return preferences.get("/ecardfield", "ecard1");
         }
 
         public void setEcardField(String s) {
@@ -323,17 +328,7 @@ public class ConfigFrameMiG extends JFrame {
     }
 
     private void verifyDataSource(RegistryPreferences prefs, JTextField furl) {
-        String driver;
-
-        if ("64".equals(prefs.getMode64())) {
-            driver = "Microsoft Access Driver (*.mdb, *.accdb)";
-        } else {
-            driver = "Microsoft Access Driver (*.mdb)";
-        }
-        String url = String.format("jdbc:odbc:Driver={%s};dbq=%s;SystemDB=%s;UID=admin",
-                driver, prefs.getDbFile(), prefs.getSysFile()).replaceAll("\\\\","/");
-        furl.setText(url);
-        jdbcUrl = url;
+        String url = calculateJdbcUrl(prefs, furl);
         int c = 0;
         configStatus.setText("Not yet successful");
         configStatus.setForeground(Color.RED);
@@ -346,11 +341,32 @@ public class ConfigFrameMiG extends JFrame {
             if (c>0) {
                 String name = findName(sjt);
                 configStatus.setText("OK! " + name );
+                configStatus.setForeground(Color.GREEN);
+
+            } else {
+                configStatus.setForeground(Color.RED);
+
             }
+            butOk.setEnabled(true);
         } catch (Exception ec) {
             log.error("Couldn't run: " + ec);
         }
 
+    }
+
+    private String calculateJdbcUrl(RegistryPreferences prefs, JTextField furl) {
+        String driver;
+
+        if ("64".equals(prefs.getMode64())) {
+            driver = "Microsoft Access Driver (*.mdb, *.accdb)";
+        } else {
+            driver = "Microsoft Access Driver (*.mdb)";
+        }
+        String url = String.format("jdbc:odbc:Driver={%s};dbq=%s;SystemDB=%s;UID=admin",
+                driver, prefs.getDbFile(), prefs.getSysFile()).replaceAll("\\\\","/");
+        furl.setText(url);
+        this.jdbcUrl = url;
+        return url;
     }
 
     private String findName(SimpleJdbcTemplate sjt) {

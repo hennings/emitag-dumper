@@ -111,9 +111,10 @@ public class AnonEmitTradApp extends JFrame implements ActionListener, BadgeList
 
 	}
 
-	File logfile = new File("c:/tyrving/db/skole2013/log1.txt");
-	File logfile2 = new File("c:/tyrving/db/skole2013/log2.txt");
-	File logfile3 = new File("c:/tyrving/db/skole2013/log-stnr-for-spool.log");
+    final String path = "c:/usr/arr/2014/skolesprint/scanlog";
+	File logfile = new File(path + "/log1.txt");
+	File logfile2 = new File(path + "/log2.txt");
+	File logfile3 = new File(path + "/log-stnr-for-spool.log");
 
 	private JLabel runnerTimeLabel;
 

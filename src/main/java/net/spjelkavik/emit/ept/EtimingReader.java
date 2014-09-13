@@ -17,8 +17,9 @@ public class EtimingReader {
 		static Logger log = Logger.getLogger(EtimingReader.class.getName());
 		
 		JdbcTemplate jdbcTemplate;
+    private SeriousLogger seriousLogger;
 
-		public JdbcTemplate getJdbcTemplate() {
+    public JdbcTemplate getJdbcTemplate() {
 			return jdbcTemplate;
 		}
 
@@ -39,16 +40,47 @@ public class EtimingReader {
 			return true;
 		}
 
+    public boolean updateResultsEcard2(int startNumber, int badgeNumber) {
+
+        renameOldEcard2(badgeNumber);
+
+        log.debug("update new set ecard2="+badgeNumber+" where startno="+startNumber);
+
+        int r2 = jdbcTemplate.update("update name set ecard2=? where startno=?",
+                new Object[] {badgeNumber,startNumber} );
+
+        log.debug("database updated " + r2);
+        return true;
+    }
+
     public boolean renameOldEcard(int ecard) {
         try {
             int startno = jdbcTemplate.queryForInt("select max(startno) as startnr from name where ecard=?",ecard);
             if (startno>0) {
-                log.debug("Existing runner " + startno + " had ecard " + ecard + " => changed the ecard");
-                int newEcard = startno + 200000;
+                log.warn("Existing runner " + startno + " had ecard " + ecard + " => changed the ecard");
+                int newEcard = startno + 10000000;
                 jdbcTemplate.update("update name set ecard=? where ecard=?",
                         new Object[] {newEcard, ecard} );
                 int r1 = jdbcTemplate.update("update ecard set ecardno=? where ecardno=?",
                         new Object[] {newEcard, ecard} );
+                seriousLogger.logMessageToDisk("Renamed ecard in 'name' and 'ecard' for startno " + startno + "; old="+ecard+" -> "+newEcard);
+            }
+        }catch (Exception e) {
+            log.error("could not rename ", e);
+        }
+        return true;
+    }
+
+    public boolean renameOldEcard2(int ecard) {
+        try {
+            int startno = jdbcTemplate.queryForInt("select max(startno) as startnr from name where ecard2=?",ecard);
+            if (startno>0) {
+                log.warn("Existing runner " + startno + " had ecard2 " + ecard + " => changed the ecard");
+                int newEcard = startno + 10000000;
+                jdbcTemplate.update("update name set ecard2=? where ecard2=?",
+                        new Object[] {newEcard, ecard} );
+                seriousLogger.logMessageToDisk("Renamed ecard2 in 'name' for startno " + startno + "; old="+ecard+" -> "+newEcard);
+
             }
         }catch (Exception e) {
             log.error("could not rename ", e);
@@ -88,6 +120,7 @@ public class EtimingReader {
 					result.put("name", rs.getString("name"));
 					result.put("ename", rs.getString("ename"));
 					result.put("ecard", rs.getString("ecard"));
+                    result.put("ecard2", rs.getString("ecard2"));
 					result.put("startno", rs.getString("startno"));
                     result.put("seed", rs.getString("seed"));
                     result.put("team_name", rs.getString("team_name"));
@@ -99,9 +132,9 @@ public class EtimingReader {
 	
 			 List<Map<String,String>> r = jdbcTemplate.query(
 					"select n.id,n.ename, n.name,n.times, n.seed, n.place, n.class, n.cource, n.starttime, "+
-					"n.status, n.statusmsg, n.startno, "+
-					"n.intime, n.ecard, n.changed, n.team, t.name as team_name from Name n, Team t "+
-					"where n.team=t.code and n.startno=? "
+					" n.status, n.statusmsg, n.startno, n.ecard2, "+
+					" n.intime, n.ecard, n.changed, n.team, t.name as team_name from Name n, Team t "+
+					" where n.team=t.code and n.startno=? "
 					,new Object[] { new Integer(startNumber)}, rse);
 					
 			log.info("template returned: " + r);
@@ -111,5 +144,13 @@ public class EtimingReader {
 
     public boolean updateResults(int startNumber, Frame frame) {
         throw new IllegalStateException("skolemesterskapet");
+    }
+
+    public void setSeriousLogger(SeriousLogger seriousLogger) {
+        this.seriousLogger = seriousLogger;
+    }
+
+    public SeriousLogger getSeriousLogger() {
+        return seriousLogger;
     }
 }
