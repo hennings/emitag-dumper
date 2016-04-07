@@ -1,11 +1,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>serial-250</artifactId>
+    <artifactId>emitag</artifactId>
     <groupId>net.spjelkavik.emit</groupId>
     <packaging>jar</packaging>
-    <name>Serial 250 Skolesprint</name>
-    <version>1.5-SNAPSHOT</version>
+    <name>Emitag Dumper</name>
+    <version>2.0-SNAPSHOT</version>
     <repositories>
 
 
@@ -20,9 +20,9 @@
     <dependencies>
 
         <dependency>
-            <groupId>com.miglayout</groupId>
-            <artifactId>miglayout</artifactId>
-            <version>3.7.3</version>
+            <groupId>com.googlecode.jperipheral</groupId>
+            <artifactId>jperipheral-java</artifactId>
+            <version>1.0.18</version>
         </dependency>
 
         <dependency>
@@ -40,26 +40,15 @@
             <artifactId>spring-jdbc</artifactId>
             <version>3.0.5.RELEASE</version>
         </dependency>
+
+        <!--
         <dependency>
             <groupId>javax.comm</groupId>
             <artifactId>comm</artifactId>
             <version>2.0.3</version>
         </dependency>
-        <dependency>
-            <groupId>commons-dbcp</groupId>
-            <artifactId>commons-dbcp</artifactId>
-            <version>1.2.2</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-pool</groupId>
-            <artifactId>commons-pool</artifactId>
-            <version>1.2</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-collections</groupId>
-            <artifactId>commons-collections</artifactId>
-            <version>3.2.1</version>
-        </dependency>
+        -->
+
         <dependency>
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
@@ -95,8 +84,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.1</version>
                 <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
+                    <source>1.7</source>
+                    <target>1.7</target>
                 </configuration>
             </plugin>
 
@@ -110,6 +99,13 @@
             <goals>
                 <goal>shade</goal>
             </goals>
+	    <configuration>
+	      <transformers>
+		<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+		  <mainClass>net.spjelkavik.emit.emitag.ReadEmitagCommandLine</mainClass>
+		</transformer>
+	      </transformers>
+	    </configuration>
         </execution>
     </executions>
     <configuration>
@@ -119,9 +115,9 @@
 </plugin>
 
 <plugin>
-  <groupId>org.bluestemsoftware.open.maven.plugin</groupId>
-  <artifactId>launch4j-plugin</artifactId>
-  <version>1.5.0.0</version>
+  <groupId>com.akathist.maven.plugins.launch4j</groupId>
+  <artifactId>launch4j-maven-plugin</artifactId>
+  <version>1.7.8</version>
   <executions>
 
     <!-- GUI exe -->
@@ -134,7 +130,7 @@
       <configuration>
         <headerType>gui</headerType>
         <outfile>target/emitag-app.exe</outfile>
-        <jar>target/${artifactId}-${version}-shaded.jar</jar>
+        <jar>target/${project.artifactId}-${project.version}-shaded.jar</jar>
         <errTitle>App Err</errTitle>
         <classPath>
           <mainClass>net.spjelkavik.emit.emitag.ReadEmitagCommandLine</mainClass>
@@ -142,7 +138,6 @@
         <icon>src/main/resources/emit.ico</icon>
         <jre>
           <minVersion>1.6.0</minVersion>
-          <maxVersion>1.7.199</maxVersion>
           <initialHeapSize>128</initialHeapSize>
           <maxHeapSize>1024</maxHeapSize>
         </jre>
@@ -161,40 +156,6 @@
     </execution>
 
 
-    <execution>
-      <id>l4j-ept</id>
-      <phase>package</phase>
-      <goals>
-        <goal>launch4j</goal>
-      </goals>
-      <configuration>
-        <headerType>gui</headerType>
-        <outfile>target/emitskolesprint-app.exe</outfile>
-        <jar>target/${artifactId}-${version}-shaded.jar</jar>
-        <errTitle>App Err</errTitle>
-        <classPath>
-          <mainClass>net.spjelkavik.emit.ept.AnonEmitTradApp</mainClass>
-        </classPath>
-        <icon>src/main/resources/emit.ico</icon>
-        <jre>
-          <minVersion>1.6.0</minVersion>
-          <maxVersion>1.7.9</maxVersion>
-          <initialHeapSize>128</initialHeapSize>
-          <maxHeapSize>1024</maxHeapSize>
-        </jre>
-        <versionInfo>
-          <fileVersion>1.0.0.0</fileVersion>
-          <txtFileVersion>1.0.0.0</txtFileVersion>
-          <fileDescription>Desc</fileDescription>
-          <copyright>C</copyright>
-          <productVersion>1.0.0.0</productVersion>
-          <txtProductVersion>1.0.0.0</txtProductVersion>
-          <productName>Product</productName>
-          <internalName>Product</internalName>
-          <originalFilename>App.exe</originalFilename>
-        </versionInfo>
-      </configuration>
-    </execution>
 
   </executions>
 </plugin>

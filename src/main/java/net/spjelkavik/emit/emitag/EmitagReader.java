@@ -3,105 +3,60 @@ package net.spjelkavik.emit.emitag;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
-import java.util.TooManyListenersException;
-import javax.comm.CommPortIdentifier;
-import javax.comm.PortInUseException;
-import javax.comm.SerialPort;
-import javax.comm.SerialPortEvent;
-import javax.comm.SerialPortEventListener;
-import javax.comm.UnsupportedCommOperationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import com.google.common.io.Files;
 import org.apache.log4j.Logger;
+import org.jperipheral.PeripheralChannelGroup;
+import org.jperipheral.PeripheralConfigurationException;
+import org.jperipheral.PeripheralInUseException;
+import org.jperipheral.PeripheralNotFoundException;
+import org.jperipheral.SerialChannel;
+import org.jperipheral.SerialPort;
 
-public final class EmitagReader implements SerialPortEventListener, Runnable {
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
+
+public final class EmitagReader {
 
     final static private Logger log = Logger.getLogger(EmitagReader.class);
 
-    static CommPortIdentifier portId;
-    static Enumeration portList;
     InputStream inputStream;
-    SerialPort serialPort;
+    final SerialPort serialPort;
     Thread		      readThread;
 
+    ByteBuffer target;
 
-    public static List<String> findSerialPorts() {
-        Enumeration portList;
-        portList = CommPortIdentifier.getPortIdentifiers();
-        List<String> ports = new ArrayList<String>();
-        while (portList.hasMoreElements()) {
-            portId = (CommPortIdentifier) portList.nextElement();
-            if (portId.getPortType() == CommPortIdentifier.PORT_SERIAL) {
-                ports.add(portId.getName());
-            }
-        }
-        return ports;
-    }
-
-    public static boolean findPort(String defaultPort) {
-        portList = CommPortIdentifier.getPortIdentifiers();
-        //log.info("Enumerator: " + portList);
-        if (!portList.hasMoreElements()) { log.warn("No COM-port found."); }
-        int n = 0;
-        boolean portFound = false;
-        while (portList.hasMoreElements()) {
-            n++;
-            portId = (CommPortIdentifier) portList.nextElement();
-            //log.info("Port: " + portId + " - " + portId.getName());
-            if (portId.getPortType() == CommPortIdentifier.PORT_SERIAL) {
-                if (portId.getName().equals(defaultPort)) {
-                    portFound  = true;
-                    return portFound;
-                }
-            }
-        }
-        if (!portFound) {
-            System.out.println("port " + defaultPort + " not found.");
-            System.exit(-1);
-        }
-        return portFound;
-    }
-
-
-        /**
-         * Constructor declaration
-         *
-         *
-         * @see
-         * @param af
-         */
-    public EmitagReader(final EmitagMessageListener af) {
+    /**
+     * Constructor declaration
+     *
+     *
+     * @see
+     * @param af
+     */
+    public EmitagReader(final String port, final EmitagMessageListener af) throws PeripheralInUseException, PeripheralNotFoundException, PeripheralConfigurationException, ExecutionException, InterruptedException {
         this.badgeListener = af;
-        try {
-            System.out.println("Opening port " + portId.getName());
-            serialPort = (SerialPort) portId.open("SimpleReadApp",32000);
-        } catch (PortInUseException e) {
-            System.err.println("ProblemS: " + e);
+        serialPort = new SerialPort(port);
+
+        ExecutorService pool = Executors.newFixedThreadPool(1);
+        SerialChannel channel = serialPort.newAsynchronousChannel(new PeripheralChannelGroup(pool), 100, MILLISECONDS);
+        channel.configure(SerialPort.BaudRate._115200, SerialPort.DataBits.EIGHT,  SerialPort.Parity.NONE, SerialPort.StopBits.ONE, SerialPort.FlowControl.NONE);
+
+
+        while (true) {
+            serialEvent(channel);
         }
-
-        try {
-            inputStream = serialPort.getInputStream();
-        } catch (IOException e) {}
-
-        try {
-            serialPort.addEventListener(this);
-        } catch (TooManyListenersException e) {}
-
-        serialPort.notifyOnDataAvailable(true);
-
-        try {
-            serialPort.setSerialPortParams(115200, SerialPort.DATABITS_8,
-                    SerialPort.STOPBITS_1,
-                    SerialPort.PARITY_NONE);
-        } catch (UnsupportedCommOperationException e) {}
-
-        readThread = new Thread(this);
-        readThread.setDaemon(true);
-        readThread.start();
+//        pool.awaitTermination(1, SECONDS);
+//        log.info("returning");
     }
 
     /**
@@ -113,9 +68,10 @@ public final class EmitagReader implements SerialPortEventListener, Runnable {
     public void run() {
         System.out.println("run");
         try {
-            Thread.sleep(5000);
+            Thread.sleep(1000);
+            log.info(target.hasRemaining());
         } catch (InterruptedException e) {}
-        //System.out.println("run..exit");
+        System.out.println("run..exit");
     }
 
     int totNr = 0;
@@ -129,94 +85,76 @@ public final class EmitagReader implements SerialPortEventListener, Runnable {
 
     long lastEvent;
 
-    public final String getPortName() {
-        return portId.getName();
-    }
+    public void serialEvent(SerialChannel channel) {
+        long now = System.currentTimeMillis();
+        try {
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param event
-     *
-     * @see
-     */
-    public void serialEvent(SerialPortEvent event) {
-        switch (event.getEventType()) {
+            target = ByteBuffer.allocate(10000);
 
-            case SerialPortEvent.BI:
+            Future<Integer> res = channel.read(target);
+            int numBytes = res.get(60, TimeUnit.SECONDS);
+            if ((now - lastEvent) > 1000) {
+                frame = new EmitagFrame();
+              //  System.out.println("-- Clear frame - more than one second since last read...");
+            }
 
-            case SerialPortEvent.OE:
 
-            case SerialPortEvent.FE:
 
-            case SerialPortEvent.PE:
+/*                    int numBytes = 0;
 
-            case SerialPortEvent.CD:
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    while (byteBuffer.hasRemaining()) {
+                        int size = byteBuffer.remaining();
+                        byte[] tmpBuffer = new byte[size];
+                        byteBuffer.get(tmpBuffer);
+                        bos.write(tmpBuffer);
+                        numBytes +=size;
+                    }
+                    byte[] readBuffer = bos.toByteArray();
+                                */
+            //log.debug("Read: " + numBytes);
+            for (int i = 0; i < numBytes; i++) {
+                byte c = target.get(i);
+                int c2 = (int) (c & 0xFF);
 
-            case SerialPortEvent.CTS:
+                if (c2 != 0 || prev != 0)
+                    //log.debug(String.format(" * %3d (p: %3d)  - %c ", c2, prev, (char) c > 13 ? c : '*'));
 
-            case SerialPortEvent.DSR:
-
-            case SerialPortEvent.RI:
-
-            case SerialPortEvent.OUTPUT_BUFFER_EMPTY:
-                break;
-
-            case SerialPortEvent.DATA_AVAILABLE:
-                byte[] readBuffer = new byte[400];
-
-                long now = System.currentTimeMillis();
-
-                if ( (now-lastEvent) > 1000) {
+                    if (c2 == 10 && prev == 13 && frame.isReady()) {
+                        frame = submitFrame(frame);
+                    }
+                if (c2 == 2) {
+                    //log.debug("STX received - new frame");
                     frame = new EmitagFrame();
-                    //System.out.println("-- New frame - more than two seconds...");
+                } else if (c2 == 3) {
+                    //log.debug("ETS received - new frame");
+                    frame = submitFrame(frame);
+                } else {
+                    if (c2 != 10 && c2 != 13) {
+                        frame.add(c2);
+                    }
                 }
-
-                try {
-                    int numBytes = 0;
-                    while (inputStream.available() > 0) {
-                        int delta = inputStream.read(readBuffer);
-                        numBytes +=delta;
-                    }
-
-                    //log.debug("Read: " + numBytes);
-                    for (int i = 0; i < numBytes; i++) {
-                        byte c = readBuffer[i];
-                        int c2 = (int) (c&0xFF);
-
-                        //System.out.println(String.format(" * %3d (p: %3d)  - %c ", c2,prev,  (char) c>13?c:'*'));
-
-                        if (c2 == 10 && prev == 13 && frame.isReady()) {
-                            frame = submitFrame(frame);
-                        }
-                        if (c2 == 2) {
-                            //log.debug("STX received - new frame");
-                            frame = new EmitagFrame();
-                        }  else if (c2 == 3) {
-                            //log.debug("ETS received - new frame");
-                            frame = submitFrame(frame);
-                        } else {
-                            if (c2!=10 && c2!=13) {
-                                frame.add(c2);
-                            }
-                        }
-                        //System.out.println("#"+i+" :" + c3 + " ( " +( totNr )  + ") " + prev);
-                        prev = c2;
-                        totNr++;
-                    }
+                //System.out.println("#"+i+" :" + c3 + " ( " +( totNr )  + ") " + prev);
+                prev = c2;
+                totNr++;
+            }
 
 
-                    //System.out.print("Read: " + new String(readBuffer));
-                } catch (IOException e) {}
+            //System.out.print("Read: " + new String(readBuffer));
 
-                lastEvent = now;
-
-                break;
+        } catch (TimeoutException timeout) {
+            log.info("no data the last 60 seconds");
+        } catch (Exception e) {
+            log.warn("something bad", e);
         }
+
+
+        lastEvent = now;
+
+
     }
 
-     EmitagMessageParser parser = new EmitagMessageParser();
+    EmitagMessageParser parser = new EmitagMessageParser();
 
     private EmitagFrame submitFrame(EmitagFrame frame) {
         prevFrame = frame;
