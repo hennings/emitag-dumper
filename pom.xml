@@ -137,12 +137,12 @@
         <jar>target/${artifactId}-${version}-shaded.jar</jar>
         <errTitle>App Err</errTitle>
         <classPath>
-          <mainClass>net.spjelkavik.emit.emitag.AnonEmitagApp</mainClass>
+          <mainClass>net.spjelkavik.emit.emitag.ReadEmitagCommandLine</mainClass>
         </classPath>
         <icon>src/main/resources/emit.ico</icon>
         <jre>
           <minVersion>1.6.0</minVersion>
-          <maxVersion>1.7.9</maxVersion>
+          <maxVersion>1.7.199</maxVersion>
           <initialHeapSize>128</initialHeapSize>
           <maxHeapSize>1024</maxHeapSize>
         </jre>
