@@ -31,9 +31,10 @@ public class ReadEmitagCommandLine {
         String defaultPort = "COM1";
 
         if (args.length > 0) {
-            defaultPort = args[0];
+            defaultPort = args[0].trim();
         }
 
+        log.info("Using port _"+defaultPort+"_");
 
         //EmitagReader.findPort(defaultPort);
         EmitagReader re = new EmitagReader(defaultPort, new EmitagMessageListener() {
