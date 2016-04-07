@@ -1,18 +1,6 @@
-IL Tyrving har arrangert skolesprint for skolene i Bærum siden ca 1995.
 
-De siste årene har vi brukt en losning med anonyme emit-brikker, og strekkoder.
+Kjør build_dist.sh, og pakk deretter ut riktig zip fra target-mappen; emitagapp-i386.zip eller emitagapp-x64.zip.
 
-mvn install:install-file -Dfile=lib/commapi/comm.jar -DgroupId=javax.comm -DartifactId=comm -Dversion=2.0.3 -Dpackaging=jar
+Kjøres med "run.sh COM5" f.eks.
 
-
-For å kjøre versjonen for emitag:
-java net.spjelkavik.emit.emitag.AnonEmitagApp COM50
-
-For å kjøre for vanlige brikker:
-java net.spjelkavik.emit.ept.AnonEmitTradApp COM12
-
-Kopier javax.comm.properties til %JAVA_HOME%/lib !
-
-Data source: (odbc 32 or odbc 64)
-jdbc:odbc:etime-java
 
